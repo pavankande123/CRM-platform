@@ -77,3 +77,5 @@ logs/
 
 # File Storage
 storage/
+
+.vercel
