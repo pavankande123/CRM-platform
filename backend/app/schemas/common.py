@@ -1,13 +1,24 @@
 import uuid
 from typing import Any, Generic, List, Optional, TypeVar
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 T = TypeVar("T")
 
 
 class BaseSchema(BaseModel):
-    """Base schema with ORM mode enabled by default."""
+    """Base schema with ORM mode enabled by default and empty string normalization."""
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def clean_empty_strings(cls, data: Any) -> Any:
+        """Normalize empty string inputs ('') to None so optional UUID, Date, and Email fields don't fail validation."""
+        if isinstance(data, dict):
+            return {
+                k: None if (isinstance(v, str) and v.strip() == "") else v
+                for k, v in data.items()
+            }
+        return data
 
 
 class StandardResponse(BaseSchema, Generic[T]):

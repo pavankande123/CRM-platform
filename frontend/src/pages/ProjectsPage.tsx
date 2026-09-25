@@ -145,10 +145,18 @@ export const ProjectsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const newProj = await projectService.createProject({
-        ...createForm,
-        value: Number(createForm.value),
-      });
+      const payload: ProjectCreate = {
+        name: createForm.name.trim(),
+        customer_id: createForm.customer_id,
+        value: Number(createForm.value) || 0,
+        currency: createForm.currency || 'INR',
+        priority: createForm.priority || 'medium',
+        product_id: createForm.product_id?.trim() || undefined,
+        pipeline_id: createForm.pipeline_id?.trim() || undefined,
+        stage_id: createForm.stage_id?.trim() || undefined,
+        expected_completion_date: createForm.expected_completion_date?.trim() || undefined,
+      };
+      const newProj = await projectService.createProject(payload);
       addNotification({
         type: 'success',
         message: `Project ${newProj.project_number} (${newProj.name}) created.`,

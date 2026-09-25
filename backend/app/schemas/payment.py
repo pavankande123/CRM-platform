@@ -7,8 +7,8 @@ from app.schemas.common import BaseSchema
 
 
 class PaymentBase(BaseSchema):
-    customer_id: uuid.UUID
     project_id: uuid.UUID
+    customer_id: Optional[uuid.UUID] = None
     amount: Decimal = Field(..., gt=Decimal("0.00"), description="Payment amount must be greater than zero")
     currency: str = "INR"
     payment_date: datetime.date

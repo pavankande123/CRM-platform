@@ -131,7 +131,20 @@ export const CustomersPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const newCust = await customerService.createCustomer(createForm);
+      const payload: CustomerCreate = {
+        name: createForm.name.trim(),
+        customer_type: createForm.customer_type || 'commercial',
+        email: createForm.email?.trim() || undefined,
+        phone: createForm.phone?.trim() || undefined,
+        city: createForm.city?.trim() || undefined,
+        state: createForm.state?.trim() || undefined,
+        status: createForm.status || 'lead',
+        source: createForm.source || 'Website Enquiry',
+        primary_contact_name: createForm.primary_contact_name?.trim() || undefined,
+        primary_contact_phone: createForm.primary_contact_phone?.trim() || undefined,
+        primary_contact_designation: createForm.primary_contact_designation?.trim() || undefined,
+      };
+      const newCust = await customerService.createCustomer(payload);
       addNotification({
         type: 'success',
         message: `Customer "${newCust.name}" created successfully.`,

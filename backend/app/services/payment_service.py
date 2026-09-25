@@ -94,27 +94,30 @@ async def create_payment(
     data: PaymentCreate,
     actor_id: Optional[uuid.UUID] = None,
 ) -> Payment:
-    # Validate customer belongs to tenant
-    cust_stmt = select(Customer).where(Customer.id == data.customer_id, Customer.tenant_id == tenant_id)
-    customer = (await db.execute(cust_stmt)).scalar_one_or_none()
-    if not customer:
-        raise NotFoundError(message="Specified Customer not found in your organization.")
-
-    # Validate project belongs to customer and tenant
+    # Validate project belongs to tenant
     proj_stmt = select(Project).where(
         Project.id == data.project_id,
-        Project.customer_id == data.customer_id,
         Project.tenant_id == tenant_id,
     )
     project = (await db.execute(proj_stmt)).scalar_one_or_none()
     if not project:
+        raise NotFoundError(message="Specified Project not found in your organization.")
+
+    # Resolve customer_id
+    customer_id = data.customer_id or project.customer_id
+    cust_stmt = select(Customer).where(Customer.id == customer_id, Customer.tenant_id == tenant_id)
+    customer = (await db.execute(cust_stmt)).scalar_one_or_none()
+    if not customer:
+        raise NotFoundError(message="Specified Customer not found in your organization.")
+
+    if project.customer_id != customer_id:
         raise ValidationError(message="Specified Project does not belong to this Customer.")
 
     payment_number = await generate_payment_number(db, tenant_id)
 
     payment = Payment(
         tenant_id=tenant_id,
-        customer_id=data.customer_id,
+        customer_id=customer_id,
         project_id=data.project_id,
         payment_number=payment_number,
         amount=data.amount,

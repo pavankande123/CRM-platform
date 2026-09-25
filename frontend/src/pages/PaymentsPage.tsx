@@ -98,8 +98,10 @@ export const PaymentsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      const selectedProj = projects.find((proj) => proj.id === createForm.project_id);
       const p = await paymentService.createPayment({
         ...createForm,
+        customer_id: selectedProj?.customer_id || undefined,
         amount: Number(createForm.amount),
       });
       addNotification({

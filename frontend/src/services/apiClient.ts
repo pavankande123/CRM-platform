@@ -60,8 +60,29 @@ export async function apiRequest<T>(
     }
   }
 
+  // Sanitize JSON request bodies by converting empty strings to null
+  let requestBody = options.body;
+  if (typeof requestBody === 'string' && headers.get('Content-Type') === 'application/json') {
+    try {
+      const parsed = JSON.parse(requestBody);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const cleaned: Record<string, any> = {};
+        for (const [k, v] of Object.entries(parsed)) {
+          if (typeof v === 'string' && v.trim() === '') {
+            cleaned[k] = null;
+          } else {
+            cleaned[k] = v;
+          }
+        }
+        requestBody = JSON.stringify(cleaned);
+      }
+    } catch {
+      // Keep original body if not JSON
+    }
+  }
+
   try {
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(url, { ...options, body: requestBody, headers });
 
     // Handle 401 Unauthorized with token refresh mechanism
     if (response.status === 401 && !options.skipAuth && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {

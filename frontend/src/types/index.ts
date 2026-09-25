@@ -304,6 +304,7 @@ export interface Payment {
 
 export interface PaymentCreate {
   project_id: string;
+  customer_id?: string;
   amount: number | string;
   currency?: string;
   payment_date?: string;
