@@ -140,6 +140,7 @@ async def get_core_dashboard(db: AsyncSession, tenant_id: uuid.UUID) -> CoreDash
         active_projects=active_projects,
         projects_by_stage=projects_by_stage,
         todays_follow_ups=today_items,
+        today_follow_ups=today_items,
         overdue_follow_ups=overdue_items,
         total_project_value=total_project_value,
         total_paid=total_paid,

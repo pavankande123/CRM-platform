@@ -20,6 +20,7 @@ class CoreDashboardResponse(BaseSchema):
     active_projects: int = 0
     projects_by_stage: List[StageDistribution] = []
     todays_follow_ups: List[FollowUpRead] = []
+    today_follow_ups: List[FollowUpRead] = []
     overdue_follow_ups: List[FollowUpRead] = []
     total_project_value: Decimal = Decimal("0.00")
     total_paid: Decimal = Decimal("0.00")

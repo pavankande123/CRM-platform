@@ -393,7 +393,8 @@ export interface CoreDashboardResponse {
   total_paid: string | number;
   total_outstanding: string | number;
   projects_by_stage: StageDistribution[];
-  today_follow_ups: FollowUp[];
+  today_follow_ups?: FollowUp[];
+  todays_follow_ups?: FollowUp[];
   overdue_follow_ups: FollowUp[];
   recent_customers: Customer[];
   recent_activity: Activity[];

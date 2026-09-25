@@ -231,13 +231,13 @@ export const ProjectsPage: React.FC = () => {
       </div>
 
       {/* Visual Pipeline Stage Badges */}
-      {activePipeline && (
+      {activePipeline && activePipeline.stages && (
         <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Active Pipeline: {activePipeline.name}
             </span>
-            <span className="text-xs text-slate-500">{activePipeline.stages.length} Stages</span>
+            <span className="text-xs text-slate-500">{activePipeline.stages?.length || 0} Stages</span>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -251,7 +251,7 @@ export const ProjectsPage: React.FC = () => {
             >
               All Stages
             </button>
-            {activePipeline.stages.map((stg) => {
+            {(activePipeline.stages || []).map((stg) => {
               const active = selectedStageId === stg.id;
               return (
                 <button

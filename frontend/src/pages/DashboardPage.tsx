@@ -90,8 +90,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     );
   }
 
-  const overdueCount = dashboard?.overdue_follow_ups.length || 0;
-  const todayCount = dashboard?.today_follow_ups.length || 0;
+  const overdueItems = dashboard?.overdue_follow_ups || [];
+  const todayItems = dashboard?.todays_follow_ups || dashboard?.today_follow_ups || [];
+  const overdueCount = overdueItems.length;
+  const todayCount = todayItems.length;
+  const projectsByStage = dashboard?.projects_by_stage || [];
+  const recentActivity = dashboard?.recent_activity || [];
+  const recentCustomers = dashboard?.recent_customers || [];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -281,13 +286,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </Button>
         </div>
 
-        {(!dashboard?.projects_by_stage || dashboard.projects_by_stage.length === 0) ? (
+        {(!projectsByStage || projectsByStage.length === 0) ? (
           <p className="text-xs text-slate-500 py-4 text-center italic">
             No projects in pipeline yet. Create a project to view stage distribution.
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-            {dashboard.projects_by_stage.map((stg) => (
+            {projectsByStage.map((stg) => (
               <div
                 key={stg.stage_id}
                 onClick={() => onNavigate('projects')}
@@ -338,7 +343,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
           <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[360px]">
             {/* Overdue items */}
-            {dashboard?.overdue_follow_ups.map((f) => (
+            {overdueItems.map((f) => (
               <div
                 key={f.id}
                 className="p-3 rounded-lg bg-rose-950/20 border border-rose-800/40 flex items-start justify-between gap-3"
@@ -366,7 +371,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             ))}
 
             {/* Today items */}
-            {dashboard?.today_follow_ups.map((f) => (
+            {todayItems.map((f) => (
               <div
                 key={f.id}
                 className="p-3 rounded-lg bg-slate-950/70 border border-slate-800 flex items-start justify-between gap-3"
@@ -424,12 +429,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
 
           <div className="flex-1 space-y-3.5 overflow-y-auto max-h-[360px] pl-4 relative before:content-[''] before:absolute before:left-1 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
-            {(!dashboard?.recent_activity || dashboard.recent_activity.length === 0) ? (
+            {(!recentActivity || recentActivity.length === 0) ? (
               <p className="text-xs text-slate-500 py-8 text-center italic">
                 No recorded activity yet.
               </p>
             ) : (
-              dashboard.recent_activity.map((act) => (
+              recentActivity.map((act) => (
                 <div key={act.id} className="relative text-xs">
                   <div className="w-2 h-2 rounded-full bg-cyan-400 absolute -left-[19px] top-1 ring-4 ring-slate-900" />
                   <div className="flex items-center justify-between text-slate-500">
@@ -468,13 +473,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </Button>
         </div>
 
-        {(!dashboard?.recent_customers || dashboard.recent_customers.length === 0) ? (
+        {(!recentCustomers || recentCustomers.length === 0) ? (
           <p className="text-xs text-slate-500 py-4 text-center italic">
             No customers created yet.
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {dashboard.recent_customers.map((c) => (
+            {recentCustomers.map((c) => (
               <div
                 key={c.id}
                 onClick={() => onNavigate('customers')}
