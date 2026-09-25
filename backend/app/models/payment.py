@@ -48,5 +48,21 @@ class Payment(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
     project: Mapped["Project"] = relationship("Project", back_populates="payments", lazy="selectin")
     recorded_by: Mapped[Optional["User"]] = relationship("User", lazy="selectin")
 
+    @property
+    def customer_name(self) -> Optional[str]:
+        return self.customer.name if self.customer else None
+
+    @property
+    def project_name(self) -> Optional[str]:
+        return self.project.name if self.project else None
+
+    @property
+    def project_number(self) -> Optional[str]:
+        return self.project.project_number if self.project else None
+
+    @property
+    def recorded_by_name(self) -> Optional[str]:
+        return self.recorded_by.full_name if self.recorded_by else None
+
     def __repr__(self) -> str:
         return f"<Payment id={self.id} number={self.payment_number} amount={self.amount}>"

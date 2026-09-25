@@ -1,5 +1,5 @@
 from typing import AsyncGenerator
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -13,13 +13,13 @@ db_url = settings.get_database_url()
 
 # Configure engine options based on dialect
 engine_kwargs = {
-    "echo": settings.DEBUG,
+    "echo": False,
     "future": True,
 }
 
 if "sqlite" in db_url:
     # SQLite does not support PostgreSQL connection pooling parameters
-    engine_kwargs["connect_args"] = {"check_same_thread": False}
+    engine_kwargs["connect_args"] = {"check_same_thread": False, "timeout": 30}
 else:
     # Production PostgreSQL connection pooling parameters
     engine_kwargs.update({
@@ -31,6 +31,14 @@ else:
     })
 
 engine: AsyncEngine = create_async_engine(db_url, **engine_kwargs)
+
+if "sqlite" in db_url:
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
 
 async_session_factory = async_sessionmaker(
     bind=engine,

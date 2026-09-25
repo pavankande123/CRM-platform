@@ -75,17 +75,17 @@ export const ProjectsPage: React.FC = () => {
           customerService.getCustomers({ pageSize: 100 }),
           productService.getProducts({ is_active: true }),
         ]);
-        setPipelines(pipes);
-        setCustomers(custs.items);
-        setProducts(prods);
+        setPipelines(pipes || []);
+        setCustomers(custs?.items || []);
+        setProducts(prods || []);
 
         // Pre-select default pipeline if available
-        const defPipe = pipes.find((p) => p.is_default) || pipes[0];
+        const defPipe = (pipes || []).find((p) => p.is_default) || (pipes || [])[0];
         if (defPipe) {
           setCreateForm((prev) => ({
             ...prev,
             pipeline_id: defPipe.id,
-            stage_id: defPipe.stages[0]?.id || '',
+            stage_id: defPipe.stages?.[0]?.id || '',
           }));
         }
       } catch (err) {
@@ -103,13 +103,14 @@ export const ProjectsPage: React.FC = () => {
         stage_id: selectedStageId || undefined,
         pageSize: 50,
       });
-      setProjects(res.items);
-      setTotalCount(res.total);
+      setProjects(res?.items || []);
+      setTotalCount(res?.total || 0);
     } catch (err) {
       addNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Failed to load projects',
       });
+      setProjects([]);
     } finally {
       setIsLoading(false);
     }
@@ -294,7 +295,7 @@ export const ProjectsPage: React.FC = () => {
             <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
             <span>Loading projects...</span>
           </div>
-        ) : projects.length === 0 ? (
+        ) : (!projects || projects.length === 0) ? (
           <EmptyState
             title="No projects found"
             description="Create a new project or select a different pipeline stage filter."
@@ -315,7 +316,7 @@ export const ProjectsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-sm">
-                {projects.map((p) => (
+                {(projects || []).map((p) => (
                   <tr
                     key={p.id}
                     onClick={() => loadProjectDetail(p.id)}
@@ -477,7 +478,7 @@ export const ProjectsPage: React.FC = () => {
                   </h4>
 
                   <div className="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
-                    {projectDetail.stage_history.map((h) => (
+                    {((projectDetail?.stage_history) || []).map((h) => (
                       <div key={h.id} className="relative">
                         <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 absolute -left-[21px] top-1 ring-4 ring-slate-950" />
                         <div className="text-xs text-slate-500">
@@ -513,14 +514,14 @@ export const ProjectsPage: React.FC = () => {
                     Project Payments
                   </h4>
 
-                  {(!projectDetail.payments || projectDetail.payments.length === 0) ? (
+                  {(!projectDetail?.payments || projectDetail.payments.length === 0) ? (
                     <EmptyState
                       title="No payments recorded"
                       description="Payment receipts recorded for this project will be listed here."
                     />
                   ) : (
                     <div className="grid gap-2.5">
-                      {projectDetail.payments.map((pm) => (
+                      {((projectDetail?.payments) || []).map((pm) => (
                         <div
                           key={pm.id}
                           className="p-3 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between"
@@ -572,9 +573,9 @@ export const ProjectsPage: React.FC = () => {
                   onChange={(e) => setTargetStageId(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
                 >
-                  {pipelines
+                  {(pipelines
                     .find((pipe) => pipe.id === stageModalProject.pipeline_id)
-                    ?.stages.map((stg) => (
+                    ?.stages || []).map((stg) => (
                       <option key={stg.id} value={stg.id}>
                         {stg.name}
                       </option>
@@ -645,7 +646,7 @@ export const ProjectsPage: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
                   >
                     <option value="">Select Customer</option>
-                    {customers.map((c) => (
+                    {(customers || []).map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -660,7 +661,7 @@ export const ProjectsPage: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
                   >
                     <option value="">Select Product</option>
-                    {products.map((p) => (
+                    {(products || []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
                       </option>
@@ -675,16 +676,16 @@ export const ProjectsPage: React.FC = () => {
                   <select
                     value={createForm.pipeline_id}
                     onChange={(e) => {
-                      const pipe = pipelines.find((p) => p.id === e.target.value);
+                      const pipe = (pipelines || []).find((p) => p.id === e.target.value);
                       setCreateForm({
                         ...createForm,
                         pipeline_id: e.target.value,
-                        stage_id: pipe?.stages[0]?.id || '',
+                        stage_id: pipe?.stages?.[0]?.id || '',
                       });
                     }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
                   >
-                    {pipelines.map((p) => (
+                    {(pipelines || []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name} {p.is_default ? '(Default)' : ''}
                       </option>

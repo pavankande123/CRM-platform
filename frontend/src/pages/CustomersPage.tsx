@@ -92,13 +92,14 @@ export const CustomersPage: React.FC = () => {
         status: statusFilter || undefined,
         pageSize: 50,
       });
-      setCustomers(res.items);
-      setTotalCount(res.total);
+      setCustomers(res?.items || []);
+      setTotalCount(res?.total || 0);
     } catch (err) {
       addNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Failed to load customers',
       });
+      setCustomers([]);
     } finally {
       setIsLoading(false);
     }
@@ -326,7 +327,7 @@ export const CustomersPage: React.FC = () => {
             <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
             <span>Loading customers...</span>
           </div>
-        ) : customers.length === 0 ? (
+        ) : (!customers || customers.length === 0) ? (
           <EmptyState
             title="No customers found"
             description="Create your first customer account or adjust your search filter."
@@ -347,7 +348,7 @@ export const CustomersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-sm">
-                {customers.map((c) => (
+                {(customers || []).map((c) => (
                   <tr
                     key={c.id}
                     onClick={() => loadCustomer360(c.id)}
@@ -510,14 +511,14 @@ export const CustomersPage: React.FC = () => {
                       </Button>
                     </div>
 
-                    {(!selectedCustomer.contacts || selectedCustomer.contacts.length === 0) ? (
+                    {(!selectedCustomer?.contacts || selectedCustomer.contacts.length === 0) ? (
                       <EmptyState
                         title="No contacts listed"
                         description="Add people working at this organization for easy reference."
                       />
                     ) : (
                       <div className="grid gap-3">
-                        {selectedCustomer.contacts.map((ct: Contact) => (
+                        {(selectedCustomer.contacts || []).map((ct: Contact) => (
                           <div
                             key={ct.id}
                             className="p-3.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between"
@@ -546,14 +547,14 @@ export const CustomersPage: React.FC = () => {
                 {activeTab === 'projects' && (
                   <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-200">Customer Projects</h4>
-                    {(!selectedCustomer.projects || selectedCustomer.projects.length === 0) ? (
+                    {(!selectedCustomer?.projects || selectedCustomer.projects.length === 0) ? (
                       <EmptyState
                         title="No active projects"
                         description="Create a project to initiate the pipeline workflow."
                       />
                     ) : (
                       <div className="grid gap-3">
-                        {selectedCustomer.projects.map((p) => (
+                        {(selectedCustomer.projects || []).map((p) => (
                           <div
                             key={p.id}
                             className="p-4 rounded-lg bg-slate-900 border border-slate-800 space-y-2"
@@ -585,14 +586,14 @@ export const CustomersPage: React.FC = () => {
                 {activeTab === 'payments' && (
                   <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-200">Recorded Payments</h4>
-                    {(!selectedCustomer.payments || selectedCustomer.payments.length === 0) ? (
+                    {(!selectedCustomer?.payments || selectedCustomer.payments.length === 0) ? (
                       <EmptyState
                         title="No payment records"
                         description="Payments recorded against this customer's projects will appear here."
                       />
                     ) : (
                       <div className="grid gap-3">
-                        {selectedCustomer.payments.map((pm) => (
+                        {(selectedCustomer.payments || []).map((pm) => (
                           <div
                             key={pm.id}
                             className="p-3.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between"
@@ -621,14 +622,14 @@ export const CustomersPage: React.FC = () => {
                 {activeTab === 'followups' && (
                   <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-200">Follow-up Tasks</h4>
-                    {(!selectedCustomer.follow_ups || selectedCustomer.follow_ups.length === 0) ? (
+                    {(!selectedCustomer?.follow_ups || selectedCustomer.follow_ups.length === 0) ? (
                       <EmptyState
                         title="No follow-ups scheduled"
                         description="Stay proactive by scheduling client calls and site visits."
                       />
                     ) : (
                       <div className="grid gap-3">
-                        {selectedCustomer.follow_ups.map((f) => (
+                        {(selectedCustomer.follow_ups || []).map((f) => (
                           <div
                             key={f.id}
                             className="p-3.5 rounded-lg bg-slate-900 border border-slate-800 flex items-start justify-between"
@@ -695,10 +696,10 @@ export const CustomersPage: React.FC = () => {
                     </form>
 
                     <div className="space-y-3 pt-2">
-                      {(!selectedCustomer.notes_list || selectedCustomer.notes_list.length === 0) ? (
+                      {(!selectedCustomer?.notes_list || selectedCustomer.notes_list.length === 0) ? (
                         <p className="text-xs text-slate-500 italic">No notes recorded yet.</p>
                       ) : (
-                        selectedCustomer.notes_list.map((n) => (
+                        (selectedCustomer.notes_list || []).map((n) => (
                           <div
                             key={n.id}
                             className="p-3 rounded-lg bg-slate-900 border border-slate-800/80 space-y-1.5"
@@ -730,14 +731,14 @@ export const CustomersPage: React.FC = () => {
                       </Button>
                     </div>
 
-                    {(!selectedCustomer.documents || selectedCustomer.documents.length === 0) ? (
+                    {(!selectedCustomer?.documents || selectedCustomer.documents.length === 0) ? (
                       <EmptyState
                         title="No documents recorded"
                         description="Record quotation, agreement, or site inspection document metadata."
                       />
                     ) : (
                       <div className="grid gap-2.5">
-                        {selectedCustomer.documents.map((d) => (
+                        {(selectedCustomer.documents || []).map((d) => (
                           <div
                             key={d.id}
                             className="p-3 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between"
@@ -765,11 +766,11 @@ export const CustomersPage: React.FC = () => {
                 {activeTab === 'activity' && (
                   <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-200">Timeline</h4>
-                    {(!selectedCustomer.activities || selectedCustomer.activities.length === 0) ? (
+                    {(!selectedCustomer?.activities || selectedCustomer.activities.length === 0) ? (
                       <p className="text-xs text-slate-500 italic">No domain activity yet.</p>
                     ) : (
                       <div className="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
-                        {selectedCustomer.activities.map((a) => (
+                        {(selectedCustomer.activities || []).map((a) => (
                           <div key={a.id} className="relative">
                             <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 absolute -left-[21px] top-1 ring-4 ring-slate-950" />
                             <div className="text-xs text-slate-500">

@@ -30,12 +30,13 @@ export const ProductsPage: React.FC = () => {
       const items = await productService.getProducts({
         search: searchQuery.trim() || undefined,
       });
-      setProducts(items);
+      setProducts(Array.isArray(items) ? items : []);
     } catch (err) {
       addNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Failed to load products',
       });
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +109,7 @@ export const ProductsPage: React.FC = () => {
             <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
             <span>Loading catalog...</span>
           </div>
-        ) : products.length === 0 ? (
+        ) : (!products || products.length === 0) ? (
           <EmptyState
             title="No products configured"
             description="Add products to associate them with client projects and pipelines."
@@ -117,7 +118,7 @@ export const ProductsPage: React.FC = () => {
           />
         ) : (
           <div className="divide-y divide-slate-800/80">
-            {products.map((p) => (
+            {(products || []).map((p) => (
               <div
                 key={p.id}
                 className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-900/40 transition-colors"

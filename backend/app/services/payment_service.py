@@ -77,6 +77,7 @@ async def list_payments(
             notes=p.notes,
             customer_name=p.customer.name if p.customer else None,
             project_name=p.project.name if p.project else None,
+            project_number=p.project.project_number if p.project else None,
             recorded_by_id=p.recorded_by_id,
             recorded_by_name=p.recorded_by.full_name if p.recorded_by else None,
             created_at=p.created_at,

@@ -53,8 +53,8 @@ export const PaymentsPage: React.FC = () => {
     const loadProjects = async () => {
       try {
         const res = await projectService.getProjects({ pageSize: 100 });
-        setProjects(res.items);
-        if (res.items[0]) {
+        setProjects(res?.items || []);
+        if (res?.items?.[0]) {
           setCreateForm((prev) => ({ ...prev, project_id: res.items[0].id }));
         }
       } catch (err) {
@@ -71,14 +71,15 @@ export const PaymentsPage: React.FC = () => {
         paymentService.getPayments({ pageSize: 50 }),
         paymentService.getSummary(),
       ]);
-      setPayments(payRes.items);
-      setTotalCount(payRes.total);
-      setSummary(sumRes);
+      setPayments(payRes?.items || []);
+      setTotalCount(payRes?.total || 0);
+      setSummary(sumRes || null);
     } catch (err) {
       addNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Failed to load payments',
       });
+      setPayments([]);
     } finally {
       setIsLoading(false);
     }
@@ -195,7 +196,7 @@ export const PaymentsPage: React.FC = () => {
             <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
             <span>Loading payments...</span>
           </div>
-        ) : payments.length === 0 ? (
+        ) : (!payments || payments.length === 0) ? (
           <EmptyState
             title="No payment receipts"
             description="Record payments received from clients to update your accounts and project balance."
@@ -216,7 +217,7 @@ export const PaymentsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-sm">
-                {payments.map((p) => (
+                {(payments || []).map((p) => (
                   <tr key={p.id} className="hover:bg-slate-900/40 transition-colors">
                     <td className="py-3.5 px-4 font-mono text-xs text-cyan-400 font-semibold">
                       {p.payment_number}
@@ -225,14 +226,14 @@ export const PaymentsPage: React.FC = () => {
                       <div className="font-medium text-slate-200">{p.customer_name || 'Customer'}</div>
                       <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                         <Building className="w-3 h-3 text-slate-500" />
-                        <span>{p.project_name} ({p.project_number})</span>
+                        <span>{p.project_name || 'Project'} {p.project_number ? `(${p.project_number})` : ''}</span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4 font-bold text-emerald-400">
                       ₹{Number(p.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-3.5 px-4 text-slate-300">
-                      <div className="capitalize">{p.payment_method.replace('_', ' ')}</div>
+                      <div className="capitalize">{(p.payment_method || 'bank_transfer').replace('_', ' ')}</div>
                       <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                         <Calendar className="w-3 h-3" />
                         <span>{p.payment_date}</span>
@@ -278,7 +279,7 @@ export const PaymentsPage: React.FC = () => {
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
                 >
                   <option value="">Select Project</option>
-                  {projects.map((pr) => (
+                  {(projects || []).map((pr) => (
                     <option key={pr.id} value={pr.id}>
                       {pr.name} ({pr.project_number}) — {pr.customer_name}
                     </option>

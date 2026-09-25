@@ -79,6 +79,10 @@ class Customer(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin):
         cascade="all, delete-orphan",
     )
 
+    @property
+    def notes_list(self) -> List["Note"]:
+        return self.notes_rel or []
+
     def __repr__(self) -> str:
         return f"<Customer id={self.id} name={self.name} tenant={self.tenant_id}>"
 

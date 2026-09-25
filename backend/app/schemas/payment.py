@@ -37,6 +37,7 @@ class PaymentRead(PaymentBase):
     payment_number: str
     customer_name: Optional[str] = None
     project_name: Optional[str] = None
+    project_number: Optional[str] = None
     recorded_by_id: Optional[uuid.UUID] = None
     recorded_by_name: Optional[str] = None
     created_at: datetime.datetime

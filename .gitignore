@@ -4,6 +4,12 @@
 .env.*.local
 *.env
 
+# SQLite local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+
 # Python / Virtual Environment
 __pycache__/
 *.py[cod]

@@ -149,10 +149,18 @@ async def get_customer(
     tenant_id: uuid.UUID,
     customer_id: uuid.UUID,
 ) -> Customer:
-    """Fetch customer with contacts, strictly scoped to tenant."""
+    """Fetch customer with all related 360 entities, strictly scoped to tenant."""
     stmt = (
         select(Customer)
-        .options(selectinload(Customer.contacts))
+        .options(
+            selectinload(Customer.contacts),
+            selectinload(Customer.projects),
+            selectinload(Customer.payments),
+            selectinload(Customer.follow_ups),
+            selectinload(Customer.notes_rel),
+            selectinload(Customer.documents),
+            selectinload(Customer.activities),
+        )
         .where(Customer.id == customer_id, Customer.tenant_id == tenant_id)
     )
     result = await db.execute(stmt)

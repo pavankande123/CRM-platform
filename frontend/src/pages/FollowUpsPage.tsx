@@ -55,9 +55,9 @@ export const FollowUpsPage: React.FC = () => {
           customerService.getCustomers({ pageSize: 100 }),
           projectService.getProjects({ pageSize: 100 }),
         ]);
-        setCustomers(cRes.items);
-        setProjects(pRes.items);
-        if (cRes.items[0]) {
+        setCustomers(cRes?.items || []);
+        setProjects(pRes?.items || []);
+        if (cRes?.items?.[0]) {
           setCreateForm((prev) => ({ ...prev, customer_id: cRes.items[0].id }));
         }
       } catch (err) {
@@ -85,13 +85,14 @@ export const FollowUpsPage: React.FC = () => {
         ...params,
         pageSize: 50,
       });
-      setFollowUps(res.items);
-      setTotalCount(res.total);
+      setFollowUps(res?.items || []);
+      setTotalCount(res?.total || 0);
     } catch (err) {
       addNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Failed to load follow-ups',
       });
+      setFollowUps([]);
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +214,7 @@ export const FollowUpsPage: React.FC = () => {
             <Loader2 className="w-5 h-5 animate-spin text-cyan-500" />
             <span>Loading follow-ups...</span>
           </div>
-        ) : followUps.length === 0 ? (
+        ) : (!followUps || followUps.length === 0) ? (
           <EmptyState
             title={
               viewFilter === 'overdue'
@@ -228,7 +229,7 @@ export const FollowUpsPage: React.FC = () => {
           />
         ) : (
           <div className="divide-y divide-slate-800/80">
-            {followUps.map((f) => (
+            {(followUps || []).map((f) => (
               <div
                 key={f.id}
                 className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-900/40 transition-colors"
@@ -382,7 +383,7 @@ export const FollowUpsPage: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
                   >
                     <option value="">Select Customer</option>
-                    {customers.map((c) => (
+                    {(customers || []).map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -397,7 +398,7 @@ export const FollowUpsPage: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
                   >
                     <option value="">None (Customer General)</option>
-                    {projects
+                    {(projects || [])
                       .filter((p) => !createForm.customer_id || p.customer_id === createForm.customer_id)
                       .map((p) => (
                         <option key={p.id} value={p.id}>

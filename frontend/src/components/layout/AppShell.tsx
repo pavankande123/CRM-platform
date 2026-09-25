@@ -83,10 +83,11 @@ export const AppShell: React.FC<AppShellProps> = ({
       setIsSearching(true);
       try {
         const res = await searchService.search(searchQuery.trim(), 8);
-        setSearchResults(res.results);
+        setSearchResults(res?.results || []);
         setShowSearchResults(true);
       } catch (err) {
         console.error('Search error', err);
+        setSearchResults([]);
       } finally {
         setIsSearching(false);
       }
@@ -263,7 +264,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => {
-                  if (searchResults.length > 0) setShowSearchResults(true);
+                  if ((searchResults || []).length > 0) setShowSearchResults(true);
                 }}
                 placeholder="Search customers, phones, projects, or products..."
                 className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-8 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
@@ -288,16 +289,16 @@ export const AppShell: React.FC<AppShellProps> = ({
             {showSearchResults && (
               <div className="absolute left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-50">
                 <div className="p-2 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                  <span>Found {searchResults.length} matches</span>
+                  <span>Found {(searchResults || []).length} matches</span>
                   <span className="text-[10px] text-slate-500">PostgreSQL search</span>
                 </div>
-                {searchResults.length === 0 ? (
+                {(searchResults || []).length === 0 ? (
                   <div className="p-4 text-center text-xs text-slate-500 italic">
                     No matching records found in this tenant.
                   </div>
                 ) : (
                   <div className="max-h-72 overflow-y-auto divide-y divide-slate-800/60">
-                    {searchResults.map((r) => (
+                    {(searchResults || []).map((r) => (
                       <div
                         key={`${r.entity_type}-${r.id}`}
                         onClick={() => handleSearchResultClick(r)}

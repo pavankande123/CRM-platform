@@ -27,9 +27,10 @@ export const UsersPage: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await userService.getUsers();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : (data as any)?.items || []);
     } catch (err: any) {
       showToast('error', 'Failed to load users', err.message);
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +106,7 @@ export const UsersPage: React.FC = () => {
 
       {/* Users List */}
       <Card>
-        {users.length === 0 && !isLoading ? (
+        {(!users || users.length === 0) && !isLoading ? (
           <EmptyState
             icon={<Users className="w-6 h-6" />}
             title="No users found"
@@ -124,7 +125,7 @@ export const UsersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {users.map((u) => (
+                {(users || []).map((u) => (
                   <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">

@@ -25,11 +25,12 @@ export const AuditPage: React.FC = () => {
         actionFilter || undefined,
         resourceFilter || undefined
       );
-      setLogs(data.items);
-      setTotal(data.total);
-      setTotalPages(data.total_pages);
+      setLogs(data?.items || []);
+      setTotal(data?.total || 0);
+      setTotalPages(data?.total_pages || 1);
     } catch (err) {
       console.error('Failed to load audit logs:', err);
+      setLogs([]);
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +126,7 @@ export const AuditPage: React.FC = () => {
 
       {/* Audit Logs Table */}
       <Card>
-        {logs.length === 0 && !isLoading ? (
+        {(!logs || logs.length === 0) && !isLoading ? (
           <EmptyState
             icon={<ShieldCheck className="w-6 h-6" />}
             title="No audit events found"
@@ -145,7 +146,7 @@ export const AuditPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-mono">
-                {logs.map((log) => (
+                {(logs || []).map((log) => (
                   <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
                       {new Date(log.created_at).toLocaleString()}

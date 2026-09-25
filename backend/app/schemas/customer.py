@@ -81,5 +81,19 @@ class CustomerRead(CustomerBase):
     primary_contact_phone: Optional[str] = None
 
 
+from app.schemas.project import ProjectRead
+from app.schemas.payment import PaymentRead
+from app.schemas.follow_up import FollowUpRead
+from app.schemas.note import NoteRead
+from app.schemas.document import DocumentMetadataRead
+from app.schemas.activity import ActivityRead
+
+
 class CustomerDetailRead(CustomerRead):
     contacts: List[ContactRead] = []
+    projects: List[ProjectRead] = []
+    payments: List[PaymentRead] = []
+    follow_ups: List[FollowUpRead] = []
+    notes_list: List[NoteRead] = []
+    documents: List[DocumentMetadataRead] = []
+    activities: List[ActivityRead] = []
