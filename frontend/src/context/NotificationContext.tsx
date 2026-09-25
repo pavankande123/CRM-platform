@@ -85,3 +85,12 @@ export const useNotification = (): NotificationContextType => {
   }
   return context;
 };
+
+export const useNotifications = () => {
+  const { showToast } = useNotification();
+  return {
+    addNotification: ({ type, title, message }: { type: ToastType; title?: string; message?: string }) => {
+      showToast(type, title || message || 'Notification', title ? message : undefined);
+    },
+  };
+};

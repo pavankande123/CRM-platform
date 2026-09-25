@@ -7,6 +7,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -16,10 +17,12 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   leftIcon,
   rightIcon,
+  icon,
   disabled,
   className = '',
   ...props
 }) => {
+  const effectiveLeftIcon = leftIcon || icon;
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none active:scale-[0.98]';
 
   const sizeStyles = {
@@ -49,7 +52,7 @@ export const Button: React.FC<ButtonProps> = ({
         </>
       ) : (
         <>
-          {leftIcon}
+          {effectiveLeftIcon}
           {children}
           {rightIcon}
         </>
