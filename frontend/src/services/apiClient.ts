@@ -90,14 +90,18 @@ export async function apiRequest<T>(
               const retryRes = await fetch(url, { ...options, headers });
               return handleResponse<T>(retryRes);
             } else {
-              // Refresh failed: clear tokens
+              // Refresh failed: clear tokens and redirect to login
               localStorage.removeItem(TOKEN_STORAGE_KEY);
               localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
               isRefreshing = false;
+              if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                window.location.href = '/login?expired=true';
+              }
             }
           } catch {
             isRefreshing = false;
           }
+
         } else {
           // Wait for existing refresh in flight
           return new Promise((resolve, reject) => {

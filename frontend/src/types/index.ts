@@ -171,6 +171,7 @@ export interface PipelineStage {
   color: string;
   is_closed_won: boolean;
   is_closed_lost: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -398,5 +399,197 @@ export interface CoreDashboardResponse {
   overdue_follow_ups: FollowUp[];
   recent_customers: Customer[];
   recent_activity: Activity[];
+}
+
+// -------------------------------------------------------------
+// PHASE 3 PLATFORM CONFIGURABILITY & AUTOMATION TYPES
+// -------------------------------------------------------------
+
+export interface PipelineStageCreate {
+  name: string;
+  order?: number;
+  color?: string;
+  is_closed_won?: boolean;
+  is_closed_lost?: boolean;
+  is_active?: boolean;
+}
+
+export interface PipelineCreate {
+  name: string;
+  description?: string;
+  is_default?: boolean;
+  is_active?: boolean;
+  stages?: PipelineStageCreate[];
+}
+
+export type CustomFieldType = 'text' | 'number' | 'currency' | 'date' | 'boolean' | 'select';
+export type CustomFieldEntityType = 'customer' | 'project' | 'product';
+
+export interface CustomField {
+  id: string;
+  tenant_id: string;
+  entity_type: CustomFieldEntityType;
+  field_name: string;
+  display_name: string;
+  field_type: CustomFieldType;
+  is_required: boolean;
+  is_searchable: boolean;
+  options?: string[];
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CustomFieldCreate {
+  entity_type: CustomFieldEntityType;
+  field_name: string;
+  display_name: string;
+  field_type: CustomFieldType;
+  is_required?: boolean;
+  is_searchable?: boolean;
+  options?: string[];
+  is_active?: boolean;
+}
+
+export interface CustomFieldValue {
+  custom_field_id: string;
+  field_name: string;
+  display_name: string;
+  field_type: string;
+  value: unknown;
+}
+
+export type ViewEntityType = 'project' | 'customer' | 'payment' | 'follow_up';
+export type FilterOperator = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'contains' | 'in' | 'is empty' | 'is not empty';
+
+export interface FilterRule {
+  field: string;
+  operator: FilterOperator;
+  value?: unknown;
+}
+
+export interface SavedView {
+  id: string;
+  tenant_id: string;
+  user_id?: string;
+  name: string;
+  entity_type: ViewEntityType;
+  filters: FilterRule[];
+  sort_by?: string;
+  sort_direction: 'asc' | 'desc';
+  visible_columns?: string[];
+  is_shared: boolean;
+  created_at: string;
+}
+
+export interface SavedViewCreate {
+  name: string;
+  entity_type: ViewEntityType;
+  filters: FilterRule[];
+  sort_by?: string;
+  sort_direction?: 'asc' | 'desc';
+  visible_columns?: string[];
+  is_shared?: boolean;
+}
+
+export interface WorkflowCondition {
+  field: string;
+  operator: string;
+  value?: unknown;
+}
+
+export type WorkflowActionType =
+  | 'create_follow_up'
+  | 'update_record'
+  | 'create_notification'
+  | 'send_internal_notification'
+  | 'assign_record'
+  | 'add_activity';
+
+export interface WorkflowAction {
+  action_type: WorkflowActionType;
+  parameters: Record<string, unknown>;
+}
+
+export interface WorkflowDefinition {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  trigger_event: string;
+  conditions: WorkflowCondition[];
+  actions: WorkflowAction[];
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface WorkflowCreate {
+  name: string;
+  description?: string;
+  trigger_event: string;
+  conditions?: WorkflowCondition[];
+  actions: WorkflowAction[];
+  is_active?: boolean;
+}
+
+export interface WorkflowExecution {
+  id: string;
+  tenant_id: string;
+  workflow_id: string;
+  trigger_event: string;
+  entity_id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'retrying';
+  retry_count: number;
+  error_message?: string;
+  started_at: string;
+  completed_at?: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  tenant_id: string;
+  user_id?: string;
+  title: string;
+  message: string;
+  notification_type: 'info' | 'warning' | 'alert' | 'success';
+  entity_type?: string;
+  entity_id?: string;
+  is_read: boolean;
+  read_at?: string;
+  created_at: string;
+}
+
+export interface ApprovalDecision {
+  id: string;
+  approval_request_id: string;
+  decided_by_id: string;
+  decision: 'approved' | 'rejected';
+  comments?: string;
+  decided_at: string;
+}
+
+export interface ApprovalRequest {
+  id: string;
+  tenant_id: string;
+  entity_type: string;
+  entity_id: string;
+  requested_by_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  approval_type: string;
+  requested_at: string;
+  decided_at?: string;
+  decided_by_id?: string;
+  decision_comments?: string;
+  decisions?: ApprovalDecision[];
+}
+
+export interface ApprovalCreate {
+  entity_type: string;
+  entity_id: string;
+  approval_type?: string;
+}
+
+export interface ApprovalDecisionPayload {
+  decision: 'approved' | 'rejected';
+  comments?: string;
 }
 

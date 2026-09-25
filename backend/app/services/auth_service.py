@@ -315,6 +315,12 @@ async def refresh_tokens(db: AsyncSession, refresh_token_str: str) -> TokenRespo
     if payload.get("type") != "refresh":
         raise UnauthorizedError(message="Token type is not a refresh token")
 
+    old_jti = payload.get("jti")
+    from app.core.redis import redis_manager
+    if old_jti and settings.TOKEN_BLACKLIST_ENABLED:
+        if await redis_manager.is_token_revoked(old_jti):
+            raise UnauthorizedError(message="Refresh token has been revoked")
+
     user_id = payload.get("sub")
     tenant_id = payload.get("tenant_id")
 
@@ -340,6 +346,11 @@ async def refresh_tokens(db: AsyncSession, refresh_token_str: str) -> TokenRespo
         subject=str(user.id),
         tenant_id=str(user.organization_id),
     )
+
+    # Invalidate old refresh token (Token Rotation)
+    if old_jti and settings.TOKEN_BLACKLIST_ENABLED:
+        await redis_manager.revoke_token(old_jti, ttl_seconds=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400)
+
 
     return TokenResponse(
         access_token=new_access,

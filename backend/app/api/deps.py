@@ -38,6 +38,14 @@ async def get_current_user(
     if payload.get("type") != "access":
         raise UnauthorizedError(message="Invalid token type (access token expected)")
 
+    # Phase 4 Token Revocation Check
+    jti = payload.get("jti")
+    if jti and settings.TOKEN_BLACKLIST_ENABLED:
+        from app.core.redis import redis_manager
+        if await redis_manager.is_token_revoked(jti):
+            raise UnauthorizedError(message="Token has been revoked. Please log in again.")
+
+
     user_id_str = payload.get("sub")
     tenant_id_str = payload.get("tenant_id")
     if not user_id_str or not tenant_id_str:

@@ -13,7 +13,14 @@ from app.models.follow_up import FollowUp
 from app.models.payment import Payment
 from app.models.note import Note
 from app.models.document import DocumentMetadata
-from app.models.activity import Activity
+# Phase 3 Platform Configurability & Automation Models
+from app.models.custom_field import CustomField, CustomFieldValue
+from app.models.saved_view import SavedView
+from app.models.workflow import WorkflowDefinition, WorkflowExecution
+from app.models.notification import Notification
+from app.models.approval import ApprovalRequest, ApprovalDecision
+# Phase 4 Production Hardening Models
+from app.models.job import Job
 
 __all__ = [
     "Base",
@@ -36,4 +43,15 @@ __all__ = [
     "Note",
     "DocumentMetadata",
     "Activity",
+    # Phase 3
+    "CustomField",
+    "CustomFieldValue",
+    "SavedView",
+    "WorkflowDefinition",
+    "WorkflowExecution",
+    "Notification",
+    "ApprovalRequest",
+    "ApprovalDecision",
+    # Phase 4
+    "Job",
 ]

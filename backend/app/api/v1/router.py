@@ -19,6 +19,16 @@ from app.api.v1.documents import router as documents_router
 from app.api.v1.search import router as search_router
 from app.api.v1.dashboard import router as dashboard_router
 
+# Phase 3 Platform Configurability & Automation Routers
+from app.api.v1.custom_fields import router as custom_fields_router
+from app.api.v1.views import router as views_router
+from app.api.v1.workflows import router as workflows_router
+from app.api.v1.notifications import router as notifications_router
+from app.api.v1.approvals import router as approvals_router
+
+# Phase 4 Production Hardening Routers
+from app.api.v1.jobs import router as jobs_router
+
 api_v1_router = APIRouter()
 
 # Phase 1 Endpoints
@@ -39,3 +49,14 @@ api_v1_router.include_router(notes_router, prefix="/notes", tags=["Notes"])
 api_v1_router.include_router(documents_router, prefix="/documents", tags=["Documents"])
 api_v1_router.include_router(search_router, prefix="/search", tags=["Search"])
 api_v1_router.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboard"])
+
+# Phase 3 Endpoints
+api_v1_router.include_router(custom_fields_router, prefix="/custom-fields", tags=["Custom Fields"])
+api_v1_router.include_router(views_router, prefix="/views", tags=["Saved Views"])
+api_v1_router.include_router(workflows_router, prefix="/workflows", tags=["Workflows"])
+api_v1_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
+api_v1_router.include_router(approvals_router, prefix="/approvals", tags=["Approvals"])
+
+# Phase 4 Endpoints
+api_v1_router.include_router(jobs_router, prefix="/jobs", tags=["Background Jobs"])
+

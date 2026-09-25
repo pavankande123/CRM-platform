@@ -55,6 +55,7 @@ class PipelineStage(Base, UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixin
     is_closed_won: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_closed_lost: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     color: Mapped[str] = mapped_column(String(20), default="cyan", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     pipeline: Mapped["Pipeline"] = relationship("Pipeline", back_populates="stages")
     projects: Mapped[List["Project"]] = relationship("Project", back_populates="stage")

@@ -141,6 +141,31 @@ async def create_customer(
 
     await db.commit()
     await db.refresh(customer)
+
+    # Dispatch workflow event
+    try:
+        from app.services import workflow_engine
+        await workflow_engine.dispatch_event(
+            db=db,
+            tenant_id=tenant_id,
+            trigger_event="customer.created",
+            entity_type="customer",
+            entity_id=customer.id,
+            record_data={
+                "name": customer.name,
+                "customer_type": customer.customer_type,
+                "email": customer.email,
+                "phone": customer.phone,
+                "status": customer.status,
+                "source": customer.source,
+                "city": customer.city,
+                "state": customer.state,
+                "created_by_id": str(customer.created_by_id) if customer.created_by_id else None,
+            },
+        )
+    except Exception as exc:
+        logger.warning(f"Workflow dispatch error for customer.created: {exc}")
+
     return customer
 
 

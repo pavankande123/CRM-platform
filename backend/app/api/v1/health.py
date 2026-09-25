@@ -1,7 +1,8 @@
 import time
 from datetime import datetime, timezone
-from fastapi import APIRouter, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Response, status
+from fastapi.responses import JSONResponse, PlainTextResponse
+
 
 from app.core.config import settings
 from app.db.session import check_database_health
@@ -33,11 +34,21 @@ async def readiness_probe():
     db_healthy = await check_database_health()
     db_latency = (time.perf_counter() - start) * 1000.0
 
+    redis_start = time.perf_counter()
+    from app.core.redis import redis_manager
+    redis_healthy = await redis_manager.ping()
+    redis_latency = (time.perf_counter() - redis_start) * 1000.0
+
     dependencies = {
         "database": DependencyStatus(
             status="healthy" if db_healthy else "unhealthy",
             latency_ms=round(db_latency, 2) if db_healthy else None,
             error=None if db_healthy else "Database connection ping failed",
+        ),
+        "redis": DependencyStatus(
+            status="healthy" if redis_healthy else "degraded",
+            latency_ms=round(redis_latency, 2) if redis_healthy else None,
+            error=None if redis_healthy else "Redis unavailable; operating in memory fallback mode",
         ),
     }
 
@@ -56,3 +67,15 @@ async def readiness_probe():
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
     )
+
+
+@router.get("/metrics", summary="Prometheus Metrics")
+async def metrics_endpoint() -> Response:
+    """Prometheus-compatible operational metrics endpoint."""
+    from fastapi.responses import PlainTextResponse
+    from app.core.metrics import metrics_registry
+    return PlainTextResponse(
+        content=metrics_registry.generate_prometheus_text(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )
+

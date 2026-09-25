@@ -18,12 +18,15 @@ import {
   X,
   Loader2,
   ExternalLink,
+  Sliders,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { healthService } from '../../services/healthService';
 import { searchService } from '../../services/dashboardService';
+import { notificationCenterService } from '../../services/configService';
 import { Badge } from '../common/Badge';
-import type { SearchResult } from '../../types';
+import type { SearchResult, NotificationItem } from '../../types';
 
 export type MainNavView =
   | 'dashboard'
@@ -32,6 +35,7 @@ export type MainNavView =
   | 'followups'
   | 'payments'
   | 'products'
+  | 'settings'
   | 'audit'
   | 'users'
   | 'tenant';
@@ -96,11 +100,57 @@ export const AppShell: React.FC<AppShellProps> = ({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Click outside search
+  // In-app Notifications
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const [count, items] = await Promise.all([
+        notificationCenterService.getUnreadCount(),
+        notificationCenterService.getNotifications(false, 15),
+      ]);
+      setUnreadCount(count);
+      setNotifications(items);
+    } catch {
+      // silent background polling
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 20000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await notificationCenterService.markAsRead(id);
+      await fetchNotifications();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationCenterService.markAllAsRead();
+      await fetchNotifications();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Click outside search & notifications
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowSearchResults(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -129,6 +179,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   ] as const;
 
   const adminNavItems = [
+    { id: 'settings', label: 'Platform Settings', icon: <Sliders className="w-4 h-4" /> },
     { id: 'audit', label: 'Security Audit Trail', icon: <ShieldCheck className="w-4 h-4" /> },
     { id: 'users', label: 'User Directory', icon: <Users2 className="w-4 h-4" /> },
     { id: 'tenant', label: 'Tenant Profile', icon: <Building2 className="w-4 h-4" /> },
@@ -338,7 +389,70 @@ export const AppShell: React.FC<AppShellProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* In-app Notification Bell */}
+            <div ref={notifRef} className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-cyan-500 text-slate-950 font-bold text-[10px] flex items-center justify-center animate-pulse">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-50">
+                  <div className="p-3 border-b border-slate-800 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-200">
+                      Notifications {unreadCount > 0 && `(${unreadCount} unread)`}
+                    </span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-800/60">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-500 italic">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => !n.is_read && handleMarkAsRead(n.id)}
+                          className={`p-3 text-xs transition-colors cursor-pointer hover:bg-slate-800/50 ${
+                            !n.is_read ? 'bg-cyan-950/20' : ''
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-slate-200">{n.title}</p>
+                            {!n.is_read && (
+                              <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0 mt-1" />
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-400 mt-1">{n.message}</p>
+                          <p className="text-[9px] text-slate-500 mt-1">
+                            {new Date(n.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* System Status Pill */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs">
               <Activity className="w-3.5 h-3.5 text-slate-400" />

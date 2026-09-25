@@ -14,6 +14,7 @@ import { ProductsPage } from './pages/ProductsPage';
 import { AuditPage } from './pages/AuditPage';
 import { UsersPage } from './pages/UsersPage';
 import { TenantPage } from './pages/TenantPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { Loader2 } from 'lucide-react';
 
 type AuthView = 'login' | 'register';
@@ -47,6 +48,7 @@ const MainApp: React.FC = () => {
       {mainView === 'followups' && <FollowUpsPage />}
       {mainView === 'payments' && <PaymentsPage />}
       {mainView === 'products' && <ProductsPage />}
+      {mainView === 'settings' && <SettingsPage />}
       {mainView === 'audit' && <AuditPage />}
       {mainView === 'users' && <UsersPage />}
       {mainView === 'tenant' && <TenantPage />}

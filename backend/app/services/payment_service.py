@@ -142,9 +142,43 @@ async def create_payment(
         actor_id=actor_id,
     )
 
+    payment_id = payment.id
+    record_data = {
+        "payment_number": payment.payment_number,
+        "amount": float(payment.amount),
+        "status": payment.status,
+        "payment_method": payment.payment_method,
+        "customer_id": str(payment.customer_id),
+        "project_id": str(payment.project_id) if payment.project_id else None,
+        "recorded_by_id": str(payment.recorded_by_id) if payment.recorded_by_id else None,
+    }
+
     await db.commit()
-    await db.refresh(payment)
-    return payment
+
+    # Dispatch workflow event
+    try:
+        from app.services import workflow_engine
+        await workflow_engine.dispatch_event(
+            db=db,
+            tenant_id=tenant_id,
+            trigger_event="payment.created",
+            entity_type="payment",
+            entity_id=payment_id,
+            record_data=record_data,
+        )
+    except Exception as exc:
+        logger.warning(f"Workflow dispatch error for payment.created: {exc}")
+
+    stmt = (
+        select(Payment)
+        .options(
+            selectinload(Payment.customer),
+            selectinload(Payment.project),
+            selectinload(Payment.recorded_by),
+        )
+        .where(Payment.id == payment_id)
+    )
+    return (await db.execute(stmt)).scalar_one()
 
 
 async def get_financial_summary(db: AsyncSession, tenant_id: uuid.UUID) -> FinancialSummary:

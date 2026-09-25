@@ -34,10 +34,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database schema initialized for SQLite dev mode")
 
+    # Initialize Redis connection pool
+    from app.core.redis import redis_manager
+    await redis_manager.initialize()
+
     yield
 
     # Clean shutdown
-    logger.info("Shutting down application and disposing database engine")
+    logger.info("Shutting down application and disposing resources")
+    await redis_manager.close()
     await engine.dispose()
 
 
@@ -54,6 +59,11 @@ def create_application() -> FastAPI:
     )
 
     # Register Middlewares (LIFO execution order in Starlette)
+    from app.middleware.rate_limit import RateLimitMiddleware
+    from app.middleware.request_size import RequestSizeLimitMiddleware
+
+    app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(RequestSizeLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(LatencyMiddleware)
     app.add_middleware(RequestIDMiddleware)
@@ -64,6 +74,7 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
 
     # Global Exception Handlers for consistent, RFC-compliant error responses
     @app.exception_handler(AppException)

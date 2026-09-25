@@ -192,9 +192,35 @@ async def create_project(
         actor_id=actor_id,
     )
 
+    project_id = project.id
+    record_data = {
+        "project_number": project.project_number,
+        "name": project.name,
+        "value": float(project.value),
+        "status": project.status,
+        "priority": project.priority,
+        "stage_id": str(project.stage_id),
+        "customer_id": str(project.customer_id),
+        "owner_id": str(project.owner_id) if project.owner_id else None,
+    }
+
     await db.commit()
-    await db.refresh(project)
-    return project
+
+    # Dispatch workflow event
+    try:
+        from app.services import workflow_engine
+        await workflow_engine.dispatch_event(
+            db=db,
+            tenant_id=tenant_id,
+            trigger_event="project.created",
+            entity_type="project",
+            entity_id=project_id,
+            record_data=record_data,
+        )
+    except Exception as exc:
+        logger.warning(f"Workflow dispatch error for project.created: {exc}")
+
+    return await get_project(db, tenant_id, project_id)
 
 
 async def get_project(db: AsyncSession, tenant_id: uuid.UUID, project_id: uuid.UUID) -> Project:
@@ -279,7 +305,33 @@ async def change_project_stage(
 
     await db.commit()
     await db.refresh(project)
-    return project
+
+    # Dispatch workflow event
+    try:
+        from app.services import workflow_engine
+        await workflow_engine.dispatch_event(
+            db=db,
+            tenant_id=tenant_id,
+            trigger_event="project.stage_changed",
+            entity_type="project",
+            entity_id=project.id,
+            record_data={
+                "project_number": project.project_number,
+                "name": project.name,
+                "value": float(project.value),
+                "status": project.status,
+                "priority": project.priority,
+                "stage_id": str(to_stage.id),
+                "stage_name": to_stage.name,
+                "from_stage_name": from_stage_name,
+                "customer_id": str(project.customer_id),
+                "owner_id": str(project.owner_id) if project.owner_id else None,
+            },
+        )
+    except Exception as exc:
+        logger.warning(f"Workflow dispatch error for project.stage_changed: {exc}")
+
+    return await get_project(db, tenant_id, project_id)
 
 
 async def update_project(

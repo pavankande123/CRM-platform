@@ -82,6 +82,24 @@ async def logout(
     client_ip = request.client.host if request.client else None
     user_agent = request.headers.get("User-Agent")
 
+    # Phase 4 Token Revocation on Logout
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token_str = auth_header.split(" ", 1)[1]
+        try:
+            import time
+            from app.core.security import decode_token
+            from app.core.redis import redis_manager
+            payload = decode_token(token_str)
+            jti = payload.get("jti")
+            if jti:
+                exp = payload.get("exp", 0)
+                now_ts = int(time.time())
+                remaining = max(1, exp - now_ts) if exp else 3600
+                await redis_manager.revoke_token(jti, ttl_seconds=remaining)
+        except Exception:
+            pass
+
     await create_audit_entry(
         db=db,
         tenant_id=current_user.organization_id,

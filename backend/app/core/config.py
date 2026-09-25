@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = 20
     DB_POOL_TIMEOUT: int = 30
     DB_POOL_RECYCLE: int = 1800
+    DB_STATEMENT_TIMEOUT: int = 15000  # 15s in ms
+    DB_IDLE_TIMEOUT: int = 30000       # 30s in ms
 
     # Redis
     REDIS_HOST: str = "localhost"
@@ -68,6 +70,26 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str = ""
     REDIS_DB: int = 0
     REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_SOCKET_TIMEOUT: float = 2.0
+    REDIS_MAX_CONNECTIONS: int = 50
+
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_LOGIN_PER_MINUTE: int = 10
+    RATE_LIMIT_API_PER_MINUTE: int = 300
+
+    # Token Security
+    TOKEN_BLACKLIST_ENABLED: bool = True
+
+    # Document & File Storage
+    STORAGE_BACKEND: str = "local"  # local | s3
+    STORAGE_LOCAL_DIR: str = "storage"
+    STORAGE_MAX_FILE_SIZE_BYTES: int = 26214400  # 25 MB
+    S3_BUCKET_NAME: str = "enermax-documents"
+    S3_ENDPOINT_URL: str = ""
+    S3_ACCESS_KEY: str = ""
+    S3_SECRET_KEY: str = ""
+    S3_REGION: str = "us-east-1"
 
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
@@ -88,5 +110,17 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.APP_ENV.lower() == "production"
 
+    def validate_production_settings(self) -> None:
+        """Validate critical security requirements when running in production mode."""
+        if self.is_production:
+            if self.DEBUG:
+                raise ValueError("DEBUG mode must be FALSE in production environment.")
+            if "insecure" in self.SECRET_KEY.lower() or len(self.SECRET_KEY) < 32:
+                raise ValueError("Production SECRET_KEY must be a secure, random string with at least 32 characters.")
+            if not self.DATABASE_URL and self.POSTGRES_PASSWORD == "enermax_secure_password":
+                raise ValueError("Production PostgreSQL password must not use default credentials.")
+
 
 settings = Settings()
+settings.validate_production_settings()
+

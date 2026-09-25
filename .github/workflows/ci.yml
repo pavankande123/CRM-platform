@@ -60,6 +60,17 @@ jobs:
         run: |
           ruff check backend
 
+      - name: Validate Database Migrations (Alembic)
+        env:
+          DATABASE_URL: "postgresql+asyncpg://enermax_user:enermax_secure_password@localhost:5432/enermax_crm_test"
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Verify Database Backup & Restore Procedure
+        run: |
+          python scripts/verify_backup_restore.py
+
       - name: Run Backend Test Suite (Pytest)
         env:
           APP_ENV: testing
@@ -69,6 +80,7 @@ jobs:
           REDIS_URL: "redis://localhost:6379/0"
         run: |
           pytest backend/tests -v --tb=short
+
 
   frontend-checks:
     name: Frontend Type Check & Production Build

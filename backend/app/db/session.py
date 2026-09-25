@@ -28,9 +28,30 @@ else:
         "max_overflow": settings.DB_MAX_OVERFLOW,
         "pool_recycle": settings.DB_POOL_RECYCLE,
         "pool_timeout": settings.DB_POOL_TIMEOUT,
+        "connect_args": {
+            "server_settings": {
+                "statement_timeout": str(settings.DB_STATEMENT_TIMEOUT),
+                "idle_in_transaction_session_timeout": str(settings.DB_IDLE_TIMEOUT),
+            }
+        },
     })
 
 engine: AsyncEngine = create_async_engine(db_url, **engine_kwargs)
+
+
+def get_db_pool_status() -> dict:
+    """Returns runtime connection pool utilization metrics for observability."""
+    try:
+        pool = engine.sync_engine.pool
+        return {
+            "size": pool.size() if hasattr(pool, "size") else 0,
+            "checked_in": pool.checkedin() if hasattr(pool, "checkedin") else 0,
+            "checked_out": pool.checkedout() if hasattr(pool, "checkedout") else 0,
+            "overflow": pool.overflow() if hasattr(pool, "overflow") else 0,
+        }
+    except Exception:
+        return {"size": 0, "checked_in": 0, "checked_out": 0, "overflow": 0}
+
 
 if "sqlite" in db_url:
     @event.listens_for(engine.sync_engine, "connect")

@@ -134,6 +134,28 @@ async def create_follow_up(
 
     await db.commit()
     await db.refresh(follow_up)
+
+    # Dispatch workflow event
+    try:
+        from app.services import workflow_engine
+        await workflow_engine.dispatch_event(
+            db=db,
+            tenant_id=tenant_id,
+            trigger_event="follow_up.created",
+            entity_type="follow_up",
+            entity_id=follow_up.id,
+            record_data={
+                "title": follow_up.title,
+                "priority": follow_up.priority,
+                "status": follow_up.status,
+                "customer_id": str(follow_up.customer_id) if follow_up.customer_id else None,
+                "project_id": str(follow_up.project_id) if follow_up.project_id else None,
+                "assigned_to_id": str(follow_up.assigned_to_id) if follow_up.assigned_to_id else None,
+            },
+        )
+    except Exception as exc:
+        logger.warning(f"Workflow dispatch error for follow_up.created: {exc}")
+
     return follow_up
 
 
@@ -166,6 +188,28 @@ async def complete_follow_up(
 
     await db.commit()
     await db.refresh(follow_up)
+
+    # Dispatch workflow event
+    try:
+        from app.services import workflow_engine
+        await workflow_engine.dispatch_event(
+            db=db,
+            tenant_id=tenant_id,
+            trigger_event="follow_up.completed",
+            entity_type="follow_up",
+            entity_id=follow_up.id,
+            record_data={
+                "title": follow_up.title,
+                "priority": follow_up.priority,
+                "status": follow_up.status,
+                "customer_id": str(follow_up.customer_id) if follow_up.customer_id else None,
+                "project_id": str(follow_up.project_id) if follow_up.project_id else None,
+                "assigned_to_id": str(follow_up.assigned_to_id) if follow_up.assigned_to_id else None,
+            },
+        )
+    except Exception as exc:
+        logger.warning(f"Workflow dispatch error for follow_up.completed: {exc}")
+
     return follow_up
 
 

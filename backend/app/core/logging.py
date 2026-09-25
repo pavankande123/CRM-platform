@@ -11,22 +11,44 @@ tenant_id_ctx: ContextVar[Optional[str]] = ContextVar("tenant_id", default=None)
 user_id_ctx: ContextVar[Optional[str]] = ContextVar("user_id", default=None)
 
 
+import re
+
+SENSITIVE_PATTERNS = [
+    (re.compile(r"(?i)(bearer\s+)[a-zA-Z0-9\-_.]+"), r"\1***REDACTED***"),
+    (re.compile(r'(?i)(password["\']?\s*[:=]\s*["\'])([^"\']+)'), r"\1***REDACTED***"),
+    (re.compile(r'(?i)(secret["\']?\s*[:=]\s*["\'])([^"\']+)'), r"\1***REDACTED***"),
+    (re.compile(r'(?i)(token["\']?\s*[:=]\s*["\'])([^"\']+)'), r"\1***REDACTED***"),
+]
+
+
+def scrub_sensitive_text(text: str) -> str:
+    """Scrub sensitive credentials, tokens, and passwords from log strings."""
+    if not isinstance(text, str):
+        return text
+    clean = text
+    for pattern, replacement in SENSITIVE_PATTERNS:
+        clean = pattern.sub(replacement, clean)
+    return clean
+
+
 class StructuredJsonFormatter(logging.Formatter):
     """
     JSON Formatter for structured production logging.
     Formats logs into JSON with timestamp, level, service, context variables, and message.
+    Automatically scrubs sensitive credentials and tokens.
     """
     def __init__(self, service_name: str = "enermax-backend"):
         super().__init__()
         self.service_name = service_name
 
     def format(self, record: logging.LogRecord) -> str:
+        raw_msg = record.getMessage()
         log_entry: Dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "service": self.service_name,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": scrub_sensitive_text(raw_msg),
         }
 
         # Add tracing context if set
@@ -50,7 +72,6 @@ class StructuredJsonFormatter(logging.Formatter):
         if hasattr(record, "event"):
             log_entry["event"] = record.event
         if hasattr(record, "extra_data") and isinstance(record.extra_data, dict):
-            # Sanitize passwords/tokens from extra data
             sanitized = {
                 k: ("***REDACTED***" if any(s in k.lower() for s in ["password", "secret", "token", "key", "authorization"]) else v)
                 for k, v in record.extra_data.items()
@@ -61,6 +82,7 @@ class StructuredJsonFormatter(logging.Formatter):
             log_entry["exception"] = self.formatException(record.exc_info)
 
         return json.dumps(log_entry)
+
 
 
 def setup_logging(level: str = "INFO", service_name: str = "enermax-backend") -> None:
