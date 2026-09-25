@@ -88,9 +88,11 @@ export const useNotification = (): NotificationContextType => {
 
 export const useNotifications = () => {
   const { showToast } = useNotification();
-  return {
-    addNotification: ({ type, title, message }: { type: ToastType; title?: string; message?: string }) => {
+  const addNotification = useCallback(
+    ({ type, title, message }: { type: ToastType; title?: string; message?: string }) => {
       showToast(type, title || message || 'Notification', title ? message : undefined);
     },
-  };
+    [showToast]
+  );
+  return { addNotification };
 };
