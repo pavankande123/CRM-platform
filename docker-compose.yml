@@ -1,0 +1,88 @@
+services:
+  # 1. PostgreSQL Relational Database (Authoritative Source of Truth)
+  postgres:
+    image: postgres:16-alpine
+    container_name: enermax_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-enermax_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enermax_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-enermax_crm}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-enermax_user} -d ${POSTGRES_DB:-enermax_crm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - enermax_network
+
+  # 2. Redis In-Memory Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: enermax_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - enermax_network
+
+  # 3. FastAPI Modular Monolith Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: enermax_backend
+    restart: unless-stopped
+    environment:
+      APP_NAME: "${APP_NAME:-Enermax CRM}"
+      APP_ENV: "${APP_ENV:-development}"
+      DEBUG: "${DEBUG:-true}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      SECRET_KEY: "${SECRET_KEY:-insecure-change-in-production-min-64-chars}"
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-enermax_user}:${POSTGRES_PASSWORD:-enermax_secure_password}@postgres:5432/${POSTGRES_DB:-enermax_crm}"
+      REDIS_URL: "redis://redis:6379/0"
+      CORS_ORIGINS: '["http://localhost:5173", "http://localhost:80", "http://localhost"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - enermax_network
+
+  # 4. React + TypeScript + Vite + Tailwind Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: enermax_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - enermax_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  enermax_network:
+    driver: bridge
